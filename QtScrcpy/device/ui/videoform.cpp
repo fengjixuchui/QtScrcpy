@@ -21,15 +21,18 @@ extern "C"
 #include "libavutil/frame.h"
 }
 
-VideoForm::VideoForm(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::videoForm)
+VideoForm::VideoForm(bool skin, QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::videoForm)
+    , m_skin(skin)
 {    
     ui->setupUi(this);
     initUI();
     updateShowSize(size());
     bool vertical = size().height() > size().width();
-    updateStyleSheet(vertical);
+    if (m_skin) {
+        updateStyleSheet(vertical);
+    }
 }
 
 VideoForm::~VideoForm()
@@ -40,18 +43,20 @@ VideoForm::~VideoForm()
 void VideoForm::initUI()
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    QPixmap phone;
-    if (phone.load(":/res/phone.png")) {
-        m_widthHeightRatio = 1.0f * phone.width() / phone.height();
-    }
+    if (m_skin) {
+        QPixmap phone;
+        if (phone.load(":/res/phone.png")) {
+            m_widthHeightRatio = 1.0f * phone.width() / phone.height();
+        }
 
-    // mac下去掉标题栏影响showfullscreen
 #ifndef Q_OS_OSX
-    // 去掉标题栏
-    setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
-    // 根据图片构造异形窗口
-    setAttribute(Qt::WA_TranslucentBackground);
+        // mac下去掉标题栏影响showfullscreen
+        // 去掉标题栏
+        setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
+        // 根据图片构造异形窗口
+        setAttribute(Qt::WA_TranslucentBackground);
 #endif
+    }
 
     setMouseTracking(true);    
     ui->videoWidget->setMouseTracking(true);
@@ -100,7 +105,6 @@ void VideoForm::updateStyleSheet(bool vertical)
                      border-width: 150px 142px 85px 142px;
                  }
                  )");
-        layout()->setContentsMargins(10, 68, 12, 62);
     } else {
         setStyleSheet(R"(
                  #videoForm {
@@ -108,15 +112,30 @@ void VideoForm::updateStyleSheet(bool vertical)
                      border-width: 142px 85px 142px 150px;
                  }
                  )");
-        layout()->setContentsMargins(68, 12, 62, 10);
     }
+    layout()->setContentsMargins(getMargins(vertical));
+}
+
+QMargins VideoForm::getMargins(bool vertical)
+{
+    QMargins margins;
+    if (vertical) {
+        margins = QMargins(10, 68, 12, 62);
+    } else {
+        margins = QMargins(68, 12, 62, 10);
+    }
+    return margins;
+}
+
+void VideoForm::updateScreenRatio(const QSize &newSize)
+{
+    m_widthHeightRatio = 1.0f * qMin(newSize.width(),newSize.height()) / qMax(newSize.width(),newSize.height());
 }
 
 void VideoForm::updateShowSize(const QSize &newSize)
 {
-    if (frameSize != newSize) {
-        frameSize = newSize;
-
+    if (m_frameSize != newSize) {
+        m_frameSize = newSize;
         bool vertical = newSize.height() > newSize.width();
         QSize showSize = newSize;
         QDesktopWidget* desktop = QApplication::desktop();
@@ -133,6 +152,12 @@ void VideoForm::updateShowSize(const QSize &newSize)
             if (isFullScreen()) {
                 switchFullScreen();
             }
+            if (layout()) {
+                QMargins m = getMargins(vertical);
+                showSize.setWidth(showSize.width() + m.left() + m.right());
+                showSize.setHeight(showSize.height() + m.top() + m.bottom());
+            }
+
             // 窗口居中
             move(screenRect.center() - QRect(0, 0, showSize.width(), showSize.height()).center());
         }
@@ -147,7 +172,9 @@ void VideoForm::updateShowSize(const QSize &newSize)
 #else
             resize(showSize);
 #endif
-            updateStyleSheet(vertical);
+            if (m_skin) {
+                updateStyleSheet(vertical);
+            }
         }
     }
 }
@@ -161,7 +188,9 @@ void VideoForm::switchFullScreen()
         //setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
         //show();
 #endif
-        updateStyleSheet(height() > width());
+        if (m_skin) {
+            updateStyleSheet(height() > width());
+        }
         showToolForm(true);
 #ifdef Q_OS_WIN32
         ::SetThreadExecutionState(ES_CONTINUOUS);
@@ -173,7 +202,9 @@ void VideoForm::switchFullScreen()
         //setWindowFlags(windowFlags() & ~Qt::FramelessWindowHint);
 #endif
         showToolForm(false);
-        layout()->setContentsMargins(0, 0, 0, 0);
+        if (m_skin) {
+            layout()->setContentsMargins(0, 0, 0, 0);
+        }
         showFullScreen();
 
         // 全屏状态禁止电脑休眠、息屏
@@ -236,12 +267,29 @@ void VideoForm::mousePressEvent(QMouseEvent *event)
 
 void VideoForm::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (ui->videoWidget->geometry().contains(event->pos())) {
+    if (m_dragPosition.isNull()) {
         if (!m_controller) {
             return;
         }
         event->setLocalPos(ui->videoWidget->mapFrom(this, event->localPos().toPoint()));
+        // local check
+        QPointF local = event->localPos();
+        if (local.x() < 0) {
+            local.setX(0);
+        }
+        if (local.x() > ui->videoWidget->width()) {
+            local.setX(ui->videoWidget->width());
+        }
+        if (local.y() < 0) {
+            local.setY(0);
+        }
+        if (local.y() > ui->videoWidget->height()) {
+            local.setY(ui->videoWidget->height());
+        }
+        event->setLocalPos(local);
         m_controller->mouseEvent(event, ui->videoWidget->frameSize(), ui->videoWidget->size());
+    } else {
+        m_dragPosition = QPoint(0, 0);
     }
 }
 
@@ -253,7 +301,7 @@ void VideoForm::mouseMoveEvent(QMouseEvent *event)
         }
         event->setLocalPos(ui->videoWidget->mapFrom(this, event->localPos().toPoint()));
         m_controller->mouseEvent(event, ui->videoWidget->frameSize(), ui->videoWidget->size());
-    } else {
+    } else if (!m_dragPosition.isNull()){
         if (event->buttons() & Qt::LeftButton) {
             move(event->globalPos() - m_dragPosition);
             event->accept();

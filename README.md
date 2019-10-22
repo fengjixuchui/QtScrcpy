@@ -1,4 +1,4 @@
-# QtScrcpy 
+# QtScrcpy
 
 ![build state](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![license](https://img.shields.io/badge/license-Apache2.0-blue.svg)
@@ -17,6 +17,25 @@ QtScrcpy可以通过USB(或通过TCP/IP)连接Android设备，并进行显示和
 ![mac](screenshot/mac.jpg)
 
 ![linux](screenshot/ubuntu.png)
+
+## 自定义按键映射（仅windows平台开启）
+可以根据需要，自己编写脚本将PC键盘按键映射为手机的触摸点击，编写规则在[这里](按键映射说明.md)。
+
+默认自带了针对和平精英手游进行键鼠映射的映射脚本，开启后可以用键鼠像玩端游一样玩和平精英手游，你也可以按照[编写规则](按键映射说明.md)编写其他游戏的映射文件，默认按键映射如下：
+
+![game](screenshot/game.jpg)
+
+[这里有玩和平精英的视频演示](http://mp.weixin.qq.com/mp/video?__biz=MzU1NTg5MjYyNw==&mid=100000015&sn=3e301fdc5a364bd16d6207fa674bc8b3&vid=wxv_968792362971430913&idx=1&vidsn=eec329cc13c3e24c187dc9b4d5eb8760&fromid=1&scene=20&xtrack=1&clicktime=1567346543&sessionid=1567346375&subscene=92&ascene=0&fasttmpl_type=0&fasttmpl_fullversion=4730859-zh_CN-zip&fasttmpl_flag=0&realreporttime=1567346543910#wechat_redirect)
+
+自定义按键映射操作方法如下：
+- 编写自定义脚本放入keymap目录
+- 启动服务之前记得勾选自定义映射选项，并选择自定义映射脚本
+- 连接手机以后进入游戏场景
+- 按~键（数字键1左边）切换为游戏映射模式即可体验（具体按什么键要看你按键脚本定义的switchKey）
+- 再次按~键切换为正常控制模式
+- 要想wasd控制开车记得在载具设置中设置为单摇杆模式
+
+## 感谢
 
 基于[Genymobile](https://github.com/Genymobile)的[scrcpy](https://github.com/Genymobile/scrcpy)项目进行复刻，重构，非常感谢他。QtScrcpy和原版scrcpy区别如下：
 
@@ -43,9 +62,9 @@ QtScrcpy可以通过USB(或通过TCP/IP)连接Android设备，并进行显示和
 
 课程介绍：[https://blog.csdn.net/rankun1/article/details/87970523](https://blog.csdn.net/rankun1/article/details/87970523)
 
-或者你也可以加入我的QtScrcpy群，和志同道合的朋友一块互相交流技术：
+或者你也可以加入我的QtScrcpy QQ群，和志同道合的朋友一块互相交流技术：
 
-群号：901736468
+QQ群号：901736468
 
 
 ## 要求
@@ -58,20 +77,15 @@ Android部分至少需要API 21（Android 5.0）。
 
 ## 下载这个软件
 
+[gitee-download]: https://gitee.com/Barryda/QtScrcpy/releases
+[github-download]: https://github.com/barry-ran/QtScrcpy/releases
+
 ### Windows
 
 windows平台，你可以直接使用我编译好的可执行程序:
 
- - 国内下载 [`QtScrcpy-win32-v1.0.1.zip`][gitee-win32]
- - 国外下载 [`QtScrcpy-win32-v1.0.1.zip`][github-win32]
-
- 
-
- 
-[gitee-win32]: https://files.gitee.com/group1/M00/08/37/PaAvDF0O98SAZd-KAf-R_j8Fei8293.zip?token=677250295122144e72ff23de768dbb3a&ts=1561262188&attname=QtScrcpy-win32-v1.0.1.zip&disposition=attachment
-
-[github-win32]: https://github.com/barry-ran/QtScrcpy/releases/download/v1.0.1/QtScrcpy-win32-v1.0.1.zip
-
+ - [国内下载][gitee-download]
+ - [国外下载][github-download]
 
 你也可以[自己编译](#如何编译)
 
@@ -79,12 +93,8 @@ windows平台，你可以直接使用我编译好的可执行程序:
 
 Mac OS平台，你可以直接使用我编译好的可执行程序:
 
-- 国内下载 [`QtScrcpy-mac64-v1.0.1.zip`][gitee-mac64]
-- 国外下载 [`QtScrcpy-mac64-v1.0.1.zip`][github-mac64]
-
-[gitee-mac64]: https://files.gitee.com/group1/M00/08/37/PaAvDF0O98mAEJDJAlpAtBTOOsE526.dmg?token=3fd6b4f6b255a2e0e0362b7e40935ee5&ts=1561262231&attname=QtScrcpy-mac64-v1.0.1.dmg&disposition=attachment
-
-[github-mac64]: https://github.com/barry-ran/QtScrcpy/releases/download/v1.0.1/QtScrcpy-mac64-v1.0.1.zip
+- [国内下载][gitee-download]
+- [国外下载][github-download]
 
 你也可以[自己编译](#如何编译)
 
@@ -109,6 +119,8 @@ Mac OS平台，你可以直接使用我编译好的可执行程序:
 4. 点击获取设备ip
 5. 点击启动adbd
 6. 无线连接
+7. 再次点击刷新设备，发现多出了一个ip地址开头的设备，选择这个设备
+8. 启动服务
 
 备注：启动adbd以后不用再usb线了，以后连接断开都不再需要，除非安卓adbd停了需要重新启动
 
@@ -147,6 +159,11 @@ Mac OS平台，你可以直接使用我编译好的可执行程序:
 - 传输文件：拖拽文件到视频窗口即可发送文件到Android设备
 - 后台录制：只录制，不显示界面
 
+## TODO
+[后期计划](TODO.md)
+
+## FAQ
+[常见问题说明](FAQ.md)
 
 ## 为什么开发QtScrcpy？
 综合起来有以下几个原因，比重从大到小排列：
@@ -160,7 +177,7 @@ Mac OS平台，你可以直接使用我编译好的可执行程序:
 尽量提供了所有依赖资源，方便傻瓜式编译。
 
 ### PC端
-1. 目标平台上搭建Qt开发环境(Qt 5.9.7+)
+1. 目标平台上搭建Qt开发环境(Qt >= 5.9.7, vs >= 2015 (不支持mingw))
 2. 克隆该项目
 3. 使用QtCreator打开项目根目录all.pro
 4. 编译，运行即可

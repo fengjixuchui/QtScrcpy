@@ -8,6 +8,7 @@
 #include "ui_dialog.h"
 #include "device.h"
 #include "videoform.h"
+#include "keymap.h"
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -21,6 +22,8 @@ Dialog::Dialog(QWidget *parent) :
         bool newLine = true;
 
         switch (processResult) {
+        case AdbProcess::AER_ERROR_START:
+            break;
         case AdbProcess::AER_SUCCESS_START:
             log = "adb run";
             newLine = false;
@@ -41,6 +44,11 @@ Dialog::Dialog(QWidget *parent) :
                     ui->serialBox->addItem(item);
                 }
             } else if (args.contains("show") && args.contains("wlan0")) {
+                QString ip = m_adb.getDeviceIPFromStdOut();
+                if (!ip.isEmpty()) {
+                    ui->deviceIpEdt->setText(ip);
+                }
+            } else if (args.contains("ifconfig") && args.contains("wlan0")) {
                 QString ip = m_adb.getDeviceIPFromStdOut();
                 if (!ip.isEmpty()) {
                     ui->deviceIpEdt->setText(ip);
@@ -79,6 +87,11 @@ void Dialog::initUI()
 
     ui->formatBox->addItem("mp4");
     ui->formatBox->addItem("mkv");
+
+#ifndef Q_OS_WIN32
+    // game only windows
+    ui->gameCheck->setEnabled(false);
+#endif
 }
 
 void Dialog::execAdbCmd()
@@ -89,6 +102,20 @@ void Dialog::execAdbCmd()
     QString cmd = ui->adbCommandEdt->text().trimmed();
     outLog("adb " + cmd, false);
     m_adb.execute("", cmd.split(" ", QString::SkipEmptyParts));
+}
+
+QString Dialog::getGameScript(const QString& fileName)
+{
+    QFile loadFile(KeyMap::getKeyMapPath() + "/" + fileName);
+    if(!loadFile.open(QIODevice::ReadOnly))
+    {
+        outLog("open file failed:" + fileName, true);
+        return "";
+    }
+
+    QString ret = loadFile.readAll();
+    loadFile.close();
+    return ret;
 }
 
 void Dialog::on_updateDevice_clicked()
@@ -126,6 +153,13 @@ void Dialog::on_startServerBtn_clicked()
     params.closeScreen = ui->closeScreenCheck->isChecked();
     params.useReverse = ui->useReverseCheck->isChecked();
     params.display = !ui->notDisplayCheck->isChecked();
+    if (ui->gameCheck->isChecked()) {
+        if (ui->gameBox->currentText().isEmpty()) {
+            outLog("no keymap script selected", true);
+        } else {
+            params.gameScript = getGameScript(ui->gameBox->currentText());
+        }
+    }
     m_deviceManage.connectDevice(params);
 
 /*
@@ -148,14 +182,17 @@ void Dialog::on_wirelessConnectBtn_clicked()
         return;
     }
     QString addr = ui->deviceIpEdt->text().trimmed();
-    if (!ui->devicePortEdt->placeholderText().isEmpty()) {
-        addr += ":";
-        addr += ui->devicePortEdt->placeholderText().trimmed();
-    }
     if (!ui->devicePortEdt->text().isEmpty()) {
         addr += ":";
         addr += ui->devicePortEdt->text().trimmed();
+    } else if (!ui->devicePortEdt->placeholderText().isEmpty()) {
+        addr += ":";
+        addr += ui->devicePortEdt->placeholderText().trimmed();
+    } else {
+        outLog("error: device port is null", false);
+        return;
     }
+
     outLog("wireless connect...", false);
     QStringList adbArgs;
     adbArgs << "connect";
@@ -207,6 +244,7 @@ void Dialog::on_getIPBtn_clicked()
     // or
     // adb -s P7C0218510000537 shell ip -f inet addr show wlan0
     QStringList adbArgs;
+#if 0
     adbArgs << "shell";
     adbArgs << "ip";
     adbArgs << "-f";
@@ -214,6 +252,11 @@ void Dialog::on_getIPBtn_clicked()
     adbArgs << "addr";
     adbArgs << "show";
     adbArgs << "wlan0";
+#else
+    adbArgs << "shell";
+    adbArgs << "ifconfig";
+    adbArgs << "wlan0";
+#endif
     m_adb.execute(ui->serialBox->currentText().trimmed(), adbArgs);
 }
 
@@ -264,4 +307,29 @@ void Dialog::on_clearOut_clicked()
 void Dialog::on_stopAllServerBtn_clicked()
 {
     m_deviceManage.disconnectAllDevice();
+}
+
+void Dialog::on_updateGameScriptBtn_clicked()
+{
+    ui->gameBox->clear();
+    QDir dir(KeyMap::getKeyMapPath());
+    if (!dir.exists()) {
+        outLog("keymap directory not find", true);
+        return;
+    }
+    dir.setFilter(QDir::Files | QDir::NoSymLinks);
+    QFileInfoList list = dir.entryInfoList();
+    QFileInfo fileInfo;
+    int size = list.size();
+    for (int i = 0; i < size; ++i) {
+        fileInfo = list.at(i);
+        ui->gameBox->addItem(fileInfo.fileName());
+    }
+}
+
+void Dialog::on_gameCheck_clicked(bool checked)
+{
+    if (checked) {
+        on_updateGameScriptBtn_clicked();
+    }
 }

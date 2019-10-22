@@ -58,22 +58,20 @@ Make sure you enabled [adb debugging][enable-adb] on your device(s).
 
 ## Download
 
+[gitee-download]: https://gitee.com/Barryda/QtScrcpy/releases
+[github-download]: https://github.com/barry-ran/QtScrcpy/releases
+
 ### Windows
 For Windows, for simplicity, prebuilt archives with all the dependencies (including adb) are available:
 
- - [`QtScrcpy-win32-v1.0.1.zip`][github-win32]
-
-[github-win32]: https://github.com/barry-ran/QtScrcpy/releases/download/v1.0.1/QtScrcpy-win32-v1.0.1.zip
-
+ - [`QtScrcpy`][github-download]
 
 or you can [build it by yourself](#Build)
 
 ### Mac OS
 For Mac OS, for simplicity, prebuilt archives with all the dependencies (including adb) are available:
 
-- [`QtScrcpy-mac64-v1.0.1.zip`][github-mac64]
-
-[github-mac64]: https://github.com/barry-ran/QtScrcpy/releases/download/v1.0.1/QtScrcpy-mac64-v1.0.1.zip
+- [`QtScrcpy`][github-download]
 
 or you can [build it by yourself](#Build)
 
@@ -135,7 +133,7 @@ There are several reasons for this, and the proportions are arranged from large 
 Try to provide all the dependencies and make it easy to compile.
 
 ### PC client
-1. Set up the Qt development environment on the target platform (Qt 5.9.7+)
+1. Set up the Qt development environment on the target platform (Qt >= 5.9.7, vs >= 2015 (not support mingw))
 2. Clone the project
 3. Open the project root directory all.pro with QtCreator
 4. Compile and run

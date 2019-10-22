@@ -26,7 +26,8 @@ Device::Device(DeviceParams params, QObject *parent)
         m_vb->init();
         m_decoder = new Decoder(m_vb, this);
         m_fileHandler = new FileHandler(this);
-        m_controller = new Controller(this);
+        m_controller = new Controller(params.gameScript, this);
+        //m_videoForm = new VideoForm(false);
         m_videoForm = new VideoForm();
         m_videoForm->setSerial(m_params.serial);
         if (m_controller) {
@@ -94,6 +95,12 @@ void Device::initSignals()
     if (m_controller && m_videoForm) {
         connect(m_controller, &Controller::grabCursor, m_videoForm, &VideoForm::onGrabCursor);
     }
+    if (m_videoForm) {
+        connect(m_videoForm, &VideoForm::destroyed, this, [this](QObject *obj){
+            Q_UNUSED(obj);
+            deleteLater();
+        });
+    }
     if (m_fileHandler) {
         connect(m_fileHandler, &FileHandler::fileHandlerResult, this, [this](FileHandler::FILE_HANDLER_RESULT processResult, bool isApk){
             QString tips = "";
@@ -130,6 +137,7 @@ void Device::initSignals()
                 // update ui
                 if (m_videoForm) {
                     m_videoForm->setWindowTitle(deviceName);
+                    m_videoForm->updateScreenRatio(size);
                     m_videoForm->updateShowSize(size);
                 }
 

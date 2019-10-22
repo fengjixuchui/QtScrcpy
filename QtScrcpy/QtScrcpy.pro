@@ -22,7 +22,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
+msvc{
+    QMAKE_CFLAGS += -source-charset:utf-8
+    QMAKE_CXXFLAGS += -source-charset:utf-8
+}
 # 源码
 SOURCES += \
         main.cpp \
@@ -53,29 +56,71 @@ INCLUDEPATH += \
         $$PWD/devicemanage \
         $$PWD/fontawesome
 
+# 统一版本号入口,只修改这一个地方即可
+VERSION_MAJOR = 1
+VERSION_MINOR = 0
+VERSION_PATCH = 4
+
+# qmake变量的方式定义版本号
+VERSION = $${VERSION_MAJOR}.$${VERSION_MINOR}.$${VERSION_PATCH}
 
 # ***********************************************************
 # Win平台下配置
 # ***********************************************************
 win32 {
-    # 输出目录
-    CONFIG(debug, debug|release) {
-        DESTDIR = $$PWD/../output/win/debug
+    # 通过rc的方式的话，VERSION变量rc中获取不到,定义为宏方便rc中使用
+    DEFINES += VERSION_MAJOR=$${VERSION_MAJOR}
+    DEFINES += VERSION_MINOR=$${VERSION_MINOR}
+    DEFINES += VERSION_PATCH=$${VERSION_PATCH}
+    DEFINES += VERSION_RC_STR=\\\"$${VERSION_MAJOR}.$${VERSION_MINOR}.$${VERSION_PATCH}\\\"
+
+    contains(QT_ARCH, x86_64) {
+        message("x64")
+        # 输出目录
+        CONFIG(debug, debug|release) {
+            DESTDIR = $$PWD/../output/win/x64/debug
+        } else {
+            DESTDIR = $$PWD/../output/win/x64/release
+        }
+
+        # 依赖模块
+        LIBS += \
+                -L$$PWD/../third_party/ffmpeg/lib/x64 -lavformat \
+                -L$$PWD/../third_party/ffmpeg/lib/x64 -lavcodec \
+                -L$$PWD/../third_party/ffmpeg/lib/x64 -lavutil \
+                -L$$PWD/../third_party/ffmpeg/lib/x64 -lswscale
+
+        WIN_FFMPEG_SRC = $$PWD/../third_party/ffmpeg/bin/x64/*.dll
     } else {
-        DESTDIR = $$PWD/../output/win/release
+        message("x86")
+        # 输出目录
+        CONFIG(debug, debug|release) {
+            DESTDIR = $$PWD/../output/win/x86/debug
+        } else {
+            DESTDIR = $$PWD/../output/win/x86/release
+        }
+
+        # 依赖模块
+        LIBS += \
+                -L$$PWD/../third_party/ffmpeg/lib/x86 -lavformat \
+                -L$$PWD/../third_party/ffmpeg/lib/x86 -lavcodec \
+                -L$$PWD/../third_party/ffmpeg/lib/x86 -lavutil \
+                -L$$PWD/../third_party/ffmpeg/lib/x86 -lswscale
+
+        WIN_FFMPEG_SRC = $$PWD/../third_party/ffmpeg/bin/x86/*.dll
     }
 
-    # 依赖模块
-    LIBS += \
-            -L$$PWD/../third_party/ffmpeg/lib -lavformat \
-            -L$$PWD/../third_party/ffmpeg/lib -lavcodec \
-            -L$$PWD/../third_party/ffmpeg/lib -lavutil \
-            -L$$PWD/../third_party/ffmpeg/lib -lswscale
+    # 复制依赖库
+    WIN_DST = $$DESTDIR
+
+    WIN_FFMPEG_SRC ~= s,/,\\,g
+    WIN_DST ~= s,/,\\,g
+
+    QMAKE_POST_LINK += $$quote($$QMAKE_COPY $$WIN_FFMPEG_SRC $$WIN_DST$$escape_expand(\n\t))
 
     # windows rc file
     RC_FILE = $$PWD/res/QtScrcpy.rc
 }
-
 # ***********************************************************
 # Mac平台下配置
 # ***********************************************************
@@ -110,6 +155,16 @@ macos {
     # mac application icon
     ICON = $$PWD/res/QtScrcpy.icns
     QMAKE_INFO_PLIST = $$PWD/res/Info_mac.plist
+
+    # 定义目标命令（修改版本号字段）
+    plistupdate.commands = /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $$VERSION\" \
+    -c \"Set :CFBundleVersion $$VERSION\" \
+    $$QMAKE_INFO_PLIST
+
+    # 增加额外目标
+    QMAKE_EXTRA_TARGETS += plistupdate
+    # 设置为前置依赖
+    PRE_TARGETDEPS += plistupdate
 }
 
 # ***********************************************************

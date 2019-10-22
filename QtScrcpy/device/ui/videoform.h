@@ -16,11 +16,12 @@ class VideoForm : public QWidget
 {
     Q_OBJECT
 public:
-    explicit VideoForm(QWidget *parent = 0);
+    explicit VideoForm(bool skin = true, QWidget *parent = 0);
     ~VideoForm();
 
     void switchFullScreen();    
     void staysOnTop(bool top = true);
+    void updateScreenRatio(const QSize &newSize);
     void updateShowSize(const QSize &newSize);
     void updateRender(const AVFrame *frame);
     void setController(Controller *controller);
@@ -33,6 +34,7 @@ public slots:
 
 private:    
     void updateStyleSheet(bool vertical);
+    QMargins getMargins(bool vertical);
     void initUI();
     
     void showToolForm(bool show = true);
@@ -60,9 +62,10 @@ private:
     QPointer<QWidget> m_loadingWidget;
 
     //inside member
-    QSize frameSize;
+    QSize m_frameSize;
     QPoint m_dragPosition;
     float m_widthHeightRatio = 0.5f;
+    bool m_skin = true;
 
     //outside member
     QString m_serial = "";
