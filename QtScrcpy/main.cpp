@@ -10,9 +10,9 @@
 #include "mousetap/mousetap.h"
 #include "config.h"
 
-Dialog* g_mainDlg = Q_NULLPTR;
+static Dialog* g_mainDlg = Q_NULLPTR;
 
-QtMessageHandler g_oldMessageHandler = Q_NULLPTR;
+static QtMessageHandler g_oldMessageHandler = Q_NULLPTR;
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 void installTranslator();
 
@@ -31,8 +31,10 @@ int main(int argc, char *argv[])
 
     //update version
     QStringList versionList = QCoreApplication::applicationVersion().split(".");
-    QString version = versionList[0] + "." + versionList[1] + "." + versionList[2];
-    a.setApplicationVersion(version);
+    if (versionList.size() >= 3) {
+        QString version = versionList[0] + "." + versionList[1] + "." + versionList[2];
+        a.setApplicationVersion(version);
+    }
 
     installTranslator();
 #if defined(Q_OS_WIN32) || defined(Q_OS_OSX)
@@ -43,13 +45,18 @@ int main(int argc, char *argv[])
     qputenv("QTSCRCPY_ADB_PATH", "../../../../third_party/adb/win/adb.exe");
     qputenv("QTSCRCPY_SERVER_PATH", "../../../../third_party/scrcpy-server");
     qputenv("QTSCRCPY_KEYMAP_PATH", "../../../../keymap");
-    qputenv("QTSCRCPY_CONFIG_PATH", "../../../../config/config.ini");
+    qputenv("QTSCRCPY_CONFIG_PATH", "../../../../config");
+#endif
+
+#ifdef Q_OS_OSX
+    qputenv("QTSCRCPY_KEYMAP_PATH", "../../../../../../keymap");
 #endif
 
 #ifdef Q_OS_LINUX
     qputenv("QTSCRCPY_ADB_PATH", "../../../third_party/adb/linux/adb");
     qputenv("QTSCRCPY_SERVER_PATH", "../../../third_party/scrcpy-server");
-    qputenv("QTSCRCPY_CONFIG_PATH", "../../../config/config.ini");
+    qputenv("QTSCRCPY_CONFIG_PATH", "../../../config");
+    qputenv("QTSCRCPY_KEYMAP_PATH", "../../../keymap");
 #endif
 
     //加载样式表
@@ -75,6 +82,7 @@ int main(int argc, char *argv[])
     g_mainDlg->setWindowTitle(Config::getInstance().getTitle());
     g_mainDlg->show();
 
+    qInfo(QObject::tr("This software is completely open source and free, you can download it at the following address:").toUtf8());
     qInfo(QString("QtScrcpy %1 <https://github.com/barry-ran/QtScrcpy>").arg(QCoreApplication::applicationVersion()).toUtf8());
 
     int ret = a.exec();
@@ -91,6 +99,7 @@ void installTranslator() {
     static QTranslator translator;
     QLocale locale;
     QLocale::Language language = locale.language();
+    //language = QLocale::English;
     QString languagePath = ":/i18n/";
     switch (language) {
     case QLocale::Chinese:
@@ -112,7 +121,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     }
 
     if (QtDebugMsg < type) {
-        if (g_mainDlg && g_mainDlg->isVisible() && !msg.contains("app_proces")) {
+        if (g_mainDlg && g_mainDlg->isVisible() && !g_mainDlg->filterLog(msg)) {
             g_mainDlg->outLog(msg);
         }
     }

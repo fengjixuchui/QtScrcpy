@@ -2,6 +2,7 @@
 
 #include "devicemanage.h"
 #include "server.h"
+#include "videoform.h"
 
 #define DM_MAX_DEVICES_NUM 16
 
@@ -44,6 +45,36 @@ bool DeviceManage::connectDevice(Device::DeviceParams params)
     Device *device = new Device(params);
     connect(device, &Device::deviceDisconnect, this, &DeviceManage::onDeviceDisconnect);
     m_devices[params.serial] = device;
+    return true;
+}
+
+void DeviceManage::updateScript(QString script)
+{
+    if (m_devices.isEmpty()) {
+        qWarning() << "no device connect!!!";
+        return;
+    }
+    QMapIterator<QString, QPointer<Device>> i(m_devices);
+    while (i.hasNext()) {
+        i.next();
+        if (i.value()) {
+            i.value()->updateScript(script);
+        }
+    }
+}
+
+bool DeviceManage::staysOnTop(const QString &serial)
+{
+    if (!serial.isEmpty() && m_devices.contains(serial)) {
+        auto it = m_devices.find(serial);
+        if (!it->data()) {
+            return false;
+        }
+        if (!it->data()->getVideoForm()) {
+            return false;
+        }
+        it->data()->getVideoForm()->staysOnTop();
+    }
     return true;
 }
 

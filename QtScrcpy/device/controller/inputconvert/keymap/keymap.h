@@ -4,7 +4,10 @@
 #include <QPointF>
 #include <QVector>
 #include <QRectF>
-
+#include <QPair>
+#include <QMetaEnum>
+#include <QMultiHash>
+#include <QJsonObject>
 
 class KeyMap : public QObject
 {    
@@ -15,17 +18,43 @@ public:
         KMT_CLICK = 0,
         KMT_CLICK_TWICE,
         KMT_STEER_WHEEL,
+        KMT_DRAG,
+        KMT_MOUSE_MOVE
     };    
     Q_ENUM(KeyMapType)
 
+    enum ActionType {
+        AT_INVALID = -1,
+        AT_KEY = 0,
+        AT_MOUSE = 1,
+    };
+    Q_ENUM(ActionType)
+
     struct KeyNode {
+        ActionType type = AT_INVALID;
         int key = Qt::Key_unknown;
-        QPointF pos = QPointF(0, 0);
+        QPointF pos = QPointF(0, 0); // normal key
+        QPointF extendPos = QPointF(0, 0); // for drag
+        double extendOffset = 0.0;  // for steerWheel
+
+        KeyNode(ActionType type = AT_INVALID,
+                int key = Qt::Key_unknown,
+                QPointF pos = QPointF(0, 0),
+                QPointF extendPos = QPointF(0, 0),
+                double extendOffset = 0.0)
+            : type(type)
+            , key(key)
+            , pos(pos)
+            , extendPos(extendPos)
+            , extendOffset(extendOffset)
+        {
+
+        }
     };
 
     struct KeyMapNode {
         KeyMapType type = KMT_INVALID;
-        union {
+        union DATA {
             struct {
                 KeyNode keyNode;
                 bool switchMap = false;
@@ -34,59 +63,87 @@ public:
                 KeyNode keyNode;
             } clickTwice;
             struct {
-                // 方向盘矩形中心位置                
-                QPointF centerPos = {0.0f, 0.0f};
-
-                // 方向盘矩形四个方向偏移量                
-                float leftOffset = 0.0f;
-                float rightOffset = 0.0f;
-                float upOffset = 0.0f;
-                float downOffset = 0.0f;
-
-                // 方向盘矩形四个方向按键                
-                int leftKey = Qt::Key_unknown;
-                int rightKey = Qt::Key_unknown;
-                int upKey = Qt::Key_unknown;
-                int downKey = Qt::Key_unknown;
-
-                // 辅助变量
-                // 方向键的按下状态
-                bool leftKeyPressed = false;
-                bool rightKeyPressed = false;
-                bool upKeyPressed = false;
-                bool downKeyPressed = false;
-                // 按下方向键的数量
-                int pressKeysNum = 0;
-                // 第一次按下的键
-                int firstPressKey = 0;
+                QPointF centerPos = {0.0, 0.0};
+                KeyNode left, right, up, down;
             } steerWheel;
-        };
+            struct {
+                KeyNode keyNode;
+            } drag;
+            struct {
+                QPointF startPos = {0.0, 0.0};
+                int speedRatio = 1;
+            } mouseMove;
+            DATA() {}
+            ~DATA() {}
+        } data;
         KeyMapNode() {}
         ~KeyMapNode() {}
-    };
-
-    struct MouseMoveMap {
-        QPointF startPos = {0.0f, 0.0f};
-        int speedRatio = 1;
     };
 
     KeyMap(QObject *parent = Q_NULLPTR);
     virtual ~KeyMap();
 
     void loadKeyMap(const QString &json);
-    KeyMap::KeyMapNode& getKeyMapNode(int key);
+    const KeyMap::KeyMapNode& getKeyMapNode(int key);
+    const KeyMap::KeyMapNode& getKeyMapNodeKey(int key);
+    const KeyMap::KeyMapNode& getKeyMapNodeMouse(int key);
+    bool isSwitchOnKeyboard();
     int getSwitchKey();
-    MouseMoveMap getMouseMoveMap();
-    bool enableMouseMoveMap();
+
+    bool isValidMouseMoveMap();
+    bool isValidSteerWheelMap();
+    const KeyMap::KeyMapNode& getMouseMoveMap();
 
     static const QString& getKeyMapPath();
 
 private:
-    QVector<KeyMapNode> m_keyMapNodes;
-    KeyMapNode m_invalidNode;
-    int m_switchKey = Qt::Key_QuoteLeft;
-    MouseMoveMap m_mouseMoveMap;
+    // set up the reverse map from key/event event to keyMapNode
+    void makeReverseMap();
+
+    // safe check for base
+    bool checkItemString(const QJsonObject& node, const QString& name);
+    bool checkItemDouble(const QJsonObject& node, const QString& name);
+    bool checkItemBool(const QJsonObject& node, const QString& name);
+    bool checkItemObject(const QJsonObject& node, const QString& name);
+    bool checkItemPos(const QJsonObject& node, const QString& name);
+
+    // safe check for KeyMapNode
+    bool checkForClick(const QJsonObject& node);
+    bool checkForClickTwice(const QJsonObject& node);
+    bool checkForSteerWhell(const QJsonObject& node);
+    bool checkForDrag(const QJsonObject& node);
+
+    // get keymap from json object
+    QString getItemString(const QJsonObject& node, const QString& name);
+    double getItemDouble(const QJsonObject& node, const QString& name);
+    bool getItemBool(const QJsonObject& node, const QString& name);
+    QJsonObject getItemObject(const QJsonObject& node, const QString& name);
+    QPointF getItemPos(const QJsonObject& node, const QString& name);
+    QPair<ActionType, int> getItemKey(const QJsonObject& node, const QString& name);
+    KeyMapType getItemKeyMapType(const QJsonObject& node, const QString& name);
+
+private:
     static QString s_keyMapPath;
+
+    QVector<KeyMapNode> m_keyMapNodes;
+    KeyNode m_switchKey = {AT_KEY, Qt::Key_QuoteLeft};
+
+    // just for return
+    KeyMapNode m_invalidNode;
+
+    // steer wheel index
+    int m_idxSteerWheel = -1;
+
+    // mouse move index
+    int m_idxMouseMove = -1;
+
+    // mapping of key/mouse event name to index
+    QMetaEnum m_metaEnumKey = QMetaEnum::fromType<Qt::Key>();
+    QMetaEnum m_metaEnumMouseButtons = QMetaEnum::fromType<Qt::MouseButtons>();
+    QMetaEnum m_metaEnumKeyMapType = QMetaEnum::fromType<KeyMap::KeyMapType>();
+    // reverse map of key/mouse event
+    QMultiHash<int, KeyMapNode*> m_rmapKey;
+    QMultiHash<int, KeyMapNode*> m_rmapMouse;
 };
 
 #endif // KEYMAP_H

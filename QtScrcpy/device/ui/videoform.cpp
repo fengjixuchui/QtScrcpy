@@ -16,6 +16,7 @@
 #include "toolform.h"
 #include "controller.h"
 #include "filehandler.h"
+#include "config.h"
 extern "C"
 {
 #include "libavutil/frame.h"
@@ -25,7 +26,7 @@ VideoForm::VideoForm(bool skin, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::videoForm)
     , m_skin(skin)
-{    
+{
     ui->setupUi(this);
     initUI();
     updateShowSize(size());
@@ -36,7 +37,7 @@ VideoForm::VideoForm(bool skin, QWidget *parent)
 }
 
 VideoForm::~VideoForm()
-{   
+{
     delete ui;
 }
 
@@ -58,9 +59,9 @@ void VideoForm::initUI()
 #endif
     }
 
-    setMouseTracking(true);    
+    setMouseTracking(true);
     ui->videoWidget->setMouseTracking(true);
-    ui->videoWidget->hide();    
+    ui->videoWidget->hide();
 }
 
 void VideoForm::onGrabCursor(bool grab)
@@ -68,7 +69,7 @@ void VideoForm::onGrabCursor(bool grab)
 #if defined(Q_OS_WIN32) || defined(Q_OS_OSX)
     MouseTap::getInstance()->enableMouseEventTap(ui->videoWidget, grab);
 #else
-    Q_UNUSED(grab);
+    Q_UNUSED(grab)
 #endif
 }
 
@@ -91,8 +92,9 @@ void VideoForm::showToolForm(bool show)
 {
     if (!m_toolForm) {
         m_toolForm = new ToolForm(this, ToolForm::AP_OUTSIDE_RIGHT);
-        m_toolForm->move(pos().x() + geometry().width(), pos().y() + 30);
+        connect(m_toolForm, &ToolForm::screenshot, this, &VideoForm::screenshot);
     }
+    m_toolForm->move(pos().x() + geometry().width(), pos().y() + 30);
     m_toolForm->setVisible(show);
 }
 
@@ -101,15 +103,15 @@ void VideoForm::updateStyleSheet(bool vertical)
     if (vertical) {
         setStyleSheet(R"(
                  #videoForm {
-                     border-image: url(:/image/videoform/phone-v.png) 150px 142px 85px 142px;
-                     border-width: 150px 142px 85px 142px;
+                     border-image: url(:/image/videoform/phone-v.png) 150px 65px 85px 65px;
+                     border-width: 150px 65px 85px 65px;
                  }
                  )");
     } else {
         setStyleSheet(R"(
                  #videoForm {
-                     border-image: url(:/image/videoform/phone-h.png) 142px 85px 142px 150px;
-                     border-width: 142px 85px 142px 150px;
+                     border-image: url(:/image/videoform/phone-h.png) 65px 85px 65px 150px;
+                     border-width: 65px 85px 65px 150px;
                  }
                  )");
     }
@@ -152,7 +154,7 @@ void VideoForm::updateShowSize(const QSize &newSize)
             if (isFullScreen()) {
                 switchFullScreen();
             }
-            if (layout()) {
+            if (m_skin) {
                 QMargins m = getMargins(vertical);
                 showSize.setWidth(showSize.width() + m.left() + m.right());
                 showSize.setHeight(showSize.height() + m.top() + m.bottom());
@@ -162,16 +164,14 @@ void VideoForm::updateShowSize(const QSize &newSize)
             move(screenRect.center() - QRect(0, 0, showSize.width(), showSize.height()).center());
         }
 
-        // 减去标题栏高度 (mark:已经没有标题栏了)
-        //int titleBarHeight = style()->pixelMetric(QStyle::PM_TitleBarHeight);
-        //showSize.setHeight(showSize.height() - titleBarHeight);
+        if (!m_skin) {
+            // 减去标题栏高度
+            int titleBarHeight = style()->pixelMetric(QStyle::PM_TitleBarHeight);
+            showSize.setHeight(showSize.height() - titleBarHeight);
+        }
 
         if (showSize != size()) {
-#ifdef Q_OS_OSX
-            setFixedSize(showSize);
-#else
             resize(showSize);
-#endif
             if (m_skin) {
                 updateStyleSheet(vertical);
             }
@@ -189,7 +189,7 @@ void VideoForm::switchFullScreen()
         //show();
 #endif
         if (m_skin) {
-            updateStyleSheet(height() > width());
+            updateStyleSheet(m_frameSize.height() > m_frameSize.width());
         }
         showToolForm(true);
 #ifdef Q_OS_WIN32
@@ -244,6 +244,11 @@ void VideoForm::setSerial(const QString &serial)
     m_serial = serial;
 }
 
+const QString &VideoForm::getSerial()
+{
+    return m_serial;
+}
+
 void VideoForm::setController(Controller *controller)
 {
     m_controller = controller;
@@ -294,7 +299,7 @@ void VideoForm::mouseReleaseEvent(QMouseEvent *event)
 }
 
 void VideoForm::mouseMoveEvent(QMouseEvent *event)
-{    
+{
     if (ui->videoWidget->geometry().contains(event->pos())) {
         if (!m_controller) {
             return;
@@ -349,7 +354,6 @@ void VideoForm::keyPressEvent(QKeyEvent *event)
         return;
     }
 
-    //qDebug() << "keyPressEvent" << event->isAutoRepeat();
     m_controller->keyEvent(event, ui->videoWidget->frameSize(), ui->videoWidget->size());
 }
 
@@ -358,13 +362,12 @@ void VideoForm::keyReleaseEvent(QKeyEvent *event)
     if (!m_controller) {
         return;
     }
-    //qDebug() << "keyReleaseEvent" << event->isAutoRepeat();
     m_controller->keyEvent(event, ui->videoWidget->frameSize(), ui->videoWidget->size());
 }
 
 void VideoForm::paintEvent(QPaintEvent *paint)
 {
-    Q_UNUSED(paint);
+    Q_UNUSED(paint)
     QStyleOption opt;
     opt.init(this);
     QPainter p(this);
@@ -373,7 +376,7 @@ void VideoForm::paintEvent(QPaintEvent *paint)
 
 void VideoForm::showEvent(QShowEvent *event)
 {
-    Q_UNUSED(event);
+    Q_UNUSED(event)
     if (!isFullScreen()) {
         showToolForm();
     }
@@ -386,12 +389,12 @@ void VideoForm::dragEnterEvent(QDragEnterEvent *event)
 
 void VideoForm::dragMoveEvent(QDragMoveEvent *event)
 {
-    Q_UNUSED(event);
+    Q_UNUSED(event)
 }
 
 void VideoForm::dragLeaveEvent(QDragLeaveEvent *event)
 {
-    Q_UNUSED(event);
+    Q_UNUSED(event)
 }
 
 void VideoForm::dropEvent(QDropEvent *event)
@@ -412,5 +415,5 @@ void VideoForm::dropEvent(QDropEvent *event)
         m_fileHandler->installApkRequest(m_serial, file);
         return;
     }
-    m_fileHandler->pushFileRequest(m_serial, file);
+    m_fileHandler->pushFileRequest(m_serial, file, Config::getInstance().getPushFilePath() + fileInfo.fileName());
 }

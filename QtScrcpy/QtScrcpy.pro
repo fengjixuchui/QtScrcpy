@@ -58,7 +58,7 @@ INCLUDEPATH += \
 
 # 统一版本号入口,只修改这一个地方即可
 VERSION_MAJOR = 1
-VERSION_MINOR = 1
+VERSION_MINOR = 2
 VERSION_PATCH = 0
 
 # qmake变量的方式定义版本号
@@ -153,7 +153,7 @@ macos {
     QMAKE_BUNDLE_DATA += APP_FFMPEG
 
     APP_CONFIG.files = $$files($$PWD/../config/config.ini)
-    APP_CONFIG.path = Contents/MacOS
+    APP_CONFIG.path = Contents/MacOS/config
     QMAKE_BUNDLE_DATA += APP_CONFIG
 
     # mac application icon

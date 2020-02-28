@@ -27,6 +27,7 @@ protected:
     void sendTouchUpEvent(int id, QPointF pos);
     void sendTouchEvent(int id, QPointF pos, AndroidMotioneventAction action);
     QPointF calcFrameAbsolutePos(QPointF relativePos);
+    QPointF calcScreenAbsolutePos(QPointF relativePos);
 
     // multi touch id
     int attachTouchID(int key);
@@ -34,53 +35,56 @@ protected:
     int getTouchID(int key);
 
     // steer wheel
-    void processSteerWheel(KeyMap::KeyMapNode &node, const QKeyEvent* from);
-    int updateSteerWheelKeysPress(KeyMap::KeyMapNode &node, const QKeyEvent* from, int& keyPress1, int& keyPress2);
-    void steerWheelMove(KeyMap::KeyMapNode &node, int keysNum, int keyPress1, int keyPress2);
+    void processSteerWheel(const KeyMap::KeyMapNode &node, const QKeyEvent* from);
 
     // click
-    void processKeyClick(QPointF clickPos, bool clickTwice, bool switchMap, const QKeyEvent* from);
+    void processKeyClick(const QPointF& clickPos, bool clickTwice, bool switchMap, const QKeyEvent* from);
+
+    // drag
+    void processKeyDrag(const QPointF& startPos, QPointF endPos, const QKeyEvent* from);
 
     // mouse
     bool processMouseClick(const QMouseEvent* from);
     bool processMouseMove(const QMouseEvent* from);
-    void moveCursorToStart(const QMouseEvent* from);
-    void moveCursorTo(const QMouseEvent* from, const QPoint& pos);
-    void startMouseMoveTimer();
-    void stopMouseMoveTimer();
+    void moveCursorTo(const QMouseEvent* from, const QPoint& localPosPixel);
     void mouseMoveStartTouch(const QMouseEvent* from);
     void mouseMoveStopTouch();
+    void startMouseMoveTimer();
+    void stopMouseMoveTimer();
 
     bool switchGameMap();
-    bool checkCursorPos(const QMouseEvent* from);
+    bool checkCursorPos(const QMouseEvent *from);
 
 protected:
     void timerEvent(QTimerEvent *event);
 
 private:
-    enum SteerWheelDirection {
-        SWD_UP = 0,
-        SWD_RIGHT,
-        SWD_DOWN,
-        SWD_LEFT,
-    };
-
-private:
     QSize m_frameSize;
     QSize m_showSize;
     bool m_gameMap = false;
-
-    int multiTouchID[MULTI_TOUCH_MAX_NUM] = { 0 };    
-
-    // mouse move    
-    QPointF m_mouseMoveLastConverPos;
-    QPointF m_mouseMoveLastPos = {0.0f, 0.0f};
-    bool m_mouseMovePress = false;
-    int m_mouseMoveTimer = 0;
-
     bool m_needSwitchGameAgain = false;
-
+    int m_multiTouchID[MULTI_TOUCH_MAX_NUM] = { 0 };
     KeyMap m_keyMap;
+
+    // steer wheel
+    struct {
+        // the first key pressed
+        int touchKey = Qt::Key_unknown;
+        bool pressedUp = false;
+        bool pressedDown = false;
+        bool pressedLeft = false;
+        bool pressedRight = false;
+        // for last up
+        QPointF lastOffset;
+    } m_ctrlSteerWheel;
+
+    // mouse move
+    struct {
+        QPointF lastConverPos;
+        QPointF lastPos = {0.0, 0.0};
+        bool touching = false;
+        int timer = 0;
+    } m_ctrlMouseMove;
 };
 
 #endif // INPUTCONVERTGAME_H
