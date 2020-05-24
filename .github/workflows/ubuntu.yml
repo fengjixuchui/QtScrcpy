@@ -33,7 +33,7 @@ jobs:
           path: ${{ env.qt-install-path }}/${{ matrix.qt-arch-install }}
           key: ${{ runner.os }}/${{ matrix.qt-ver }}/${{ matrix.qt-arch-install }}
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.0.0
+        uses: jurplel/install-qt-action@v2.6.2
         with:
           version: ${{ matrix.qt-ver }}
           cached: ${{ steps.cache-qt.outputs.cache-hit }}
@@ -45,4 +45,6 @@ jobs:
       - name: Build Ubuntu
         env:
           ENV_QT_PATH: ${{ env.qt-install-path }}
-        run: ci/linux/build_for_ubuntu.sh release
+        run: |
+          python ci/generate-version.py
+          ci/linux/build_for_ubuntu.sh release

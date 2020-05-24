@@ -31,7 +31,7 @@ jobs:
           path: ${{ env.qt-install-path }}/${{ matrix.qt-arch-install }}
           key: ${{ runner.os }}/${{ matrix.qt-ver }}/${{ matrix.qt-arch-install }}
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.0.0
+        uses: jurplel/install-qt-action@v2.6.2
         with:
           version: ${{ matrix.qt-ver }}
           cached: ${{ steps.cache-qt.outputs.cache-hit }}
@@ -42,7 +42,9 @@ jobs:
       - name: Build MacOS
         env:
           ENV_QT_PATH: ${{ env.qt-install-path }}
-        run: ci/mac/build_for_mac.sh release
+        run: |
+          python ci/generate-version.py
+          ci/mac/build_for_mac.sh release
       # 获取ref最后一个/后的内容
       - name: Get the version
         shell: bash

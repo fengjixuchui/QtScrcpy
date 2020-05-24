@@ -1,5 +1,6 @@
 #include <QDesktopWidget>
 #include <QFileInfo>
+#include <QLabel>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
@@ -68,6 +69,16 @@ void VideoForm::initUI()
     ui->keepRadioWidget->setWidget(m_videoWidget);
     ui->keepRadioWidget->setWidthHeightRadio(m_widthHeightRatio);
 
+    m_fpsLabel = new QLabel(m_videoWidget);
+    QFont ft;
+    ft.setPointSize(15);
+    ft.setWeight(QFont::Light);
+    ft.setBold(true);
+    m_fpsLabel->setFont(ft);
+    m_fpsLabel->move(5, 15);
+    m_fpsLabel->setMinimumWidth(100);
+    m_fpsLabel->setStyleSheet(R"(QLabel {color: #00FF00;})");
+
     setMouseTracking(true);
     m_videoWidget->setMouseTracking(true);
     ui->keepRadioWidget->setMouseTracking(true);
@@ -77,14 +88,18 @@ QRect VideoForm::getGrabCursorRect()
 {
     QRect rc;
 #if defined(Q_OS_WIN32)
-    rc = QRect(m_videoWidget->mapToGlobal(m_videoWidget->pos()), m_videoWidget->size());
+    rc = QRect(ui->keepRadioWidget->mapToGlobal(m_videoWidget->pos()), m_videoWidget->size());
     // high dpi support
     rc.setTopLeft(rc.topLeft() * m_videoWidget->devicePixelRatio());
     rc.setBottomRight(rc.bottomRight() * m_videoWidget->devicePixelRatio());
+    rc.setX(rc.x() + 10);
+    rc.setY(rc.y() + 10);
+    rc.setWidth(rc.width() - 20);
+    rc.setHeight(rc.height() - 20);
 #elif defined(Q_OS_OSX)
     rc = m_videoWidget->geometry();
-    rc.setTopLeft(m_videoWidget->mapToGlobal(rc.topLeft()));
-    rc.setBottomRight(m_videoWidget->mapToGlobal(rc.bottomRight()));
+    rc.setTopLeft(ui->keepRadioWidget->mapToGlobal(rc.topLeft()));
+    rc.setBottomRight(ui->keepRadioWidget->mapToGlobal(rc.bottomRight()));
     rc.setX(rc.x() + 100);
     rc.setY(rc.y() + 30);
     rc.setWidth(rc.width() - 180);
@@ -113,6 +128,14 @@ void VideoForm::resizeSquare()
 void VideoForm::removeBlackRect()
 {
     resize(ui->keepRadioWidget->goodSize());
+}
+
+void VideoForm::showFPS(bool show)
+{
+    if (!m_fpsLabel) {
+        return;
+    }
+    m_fpsLabel->setVisible(show);
 }
 
 void VideoForm::updateRender(const AVFrame *frame)
@@ -429,6 +452,15 @@ void VideoForm::onSwitchFullScreen()
     }
 }
 
+void VideoForm::updateFPS(quint32 fps)
+{
+    //qDebug() << "FPS:" << fps;
+    if (!m_fpsLabel) {
+        return;
+    }
+    m_fpsLabel->setText(QString("FPS:%1").arg(fps));
+}
+
 void VideoForm::staysOnTop(bool top)
 {
     bool needShow = false;
@@ -463,6 +495,14 @@ void VideoForm::mousePressEvent(QMouseEvent *event)
         }
         event->setLocalPos(m_videoWidget->mapFrom(this, event->localPos().toPoint()));
         emit m_device->mouseEvent(event, m_videoWidget->frameSize(), m_videoWidget->size());
+
+        // debug keymap pos
+        if (event->button() == Qt::LeftButton) {
+            qreal x = event->localPos().x() / m_videoWidget->size().width();
+            qreal y = event->localPos().y() / m_videoWidget->size().height();
+            QString posTip = QString(R"("pos": {"x": %1, "y": %2})").arg(x).arg(y);
+            qInfo(posTip.toStdString().c_str());
+        }
     } else {
         if (event->button() == Qt::LeftButton) {
             m_dragPosition = event->globalPos() - frameGeometry().topLeft();
@@ -523,6 +563,14 @@ void VideoForm::mouseDoubleClickEvent(QMouseEvent *event)
 
     if (event->button() == Qt::RightButton && m_device) {
         emit m_device->postBackOrScreenOn();
+    }
+
+    if (m_videoWidget->geometry().contains(event->pos())) {
+        if (!m_device) {
+            return;
+        }
+        event->setLocalPos(m_videoWidget->mapFrom(this, event->localPos().toPoint()));
+        emit m_device->mouseEvent(event, m_videoWidget->frameSize(), m_videoWidget->size());
     }
 }
 

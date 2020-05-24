@@ -43,15 +43,15 @@ bool DeviceManage::connectDevice(Device::DeviceParams params)
     connect(device, &Device::deviceDisconnect, this, &DeviceManage::onDeviceDisconnect);
     connect(device, &Device::controlStateChange, this, &DeviceManage::onControlStateChange);
     m_devices[params.serial] = device;
+    if (!m_script.isEmpty()) {
+        device->updateScript(m_script);
+    }
     return true;
 }
 
 void DeviceManage::updateScript(QString script)
 {
-    if (m_devices.isEmpty()) {
-        qWarning() << "no device connect!!!";
-        return;
-    }
+    m_script = script;
     QMapIterator<QString, QPointer<Device>> i(m_devices);
     while (i.hasNext()) {
         i.next();
@@ -74,6 +74,21 @@ bool DeviceManage::staysOnTop(const QString &serial)
         it->data()->getVideoForm()->staysOnTop();
     }
     return true;
+}
+
+void DeviceManage::showFPS(const QString &serial, bool show)
+{
+    if (!serial.isEmpty() && m_devices.contains(serial)) {
+        auto it = m_devices.find(serial);
+        if (!it->data()) {
+            return;
+        }
+        if (!it->data()->getVideoForm()) {
+            return;
+        }
+        it->data()->getVideoForm()->showFPS(show);
+    }
+    return;
 }
 
 bool DeviceManage::disconnectDevice(const QString &serial)

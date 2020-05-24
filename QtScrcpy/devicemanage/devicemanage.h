@@ -16,6 +16,7 @@ public:
     bool connectDevice(Device::DeviceParams params);
     void updateScript(QString script);
     bool staysOnTop(const QString &serial);
+    void showFPS(const QString &serial, bool show);
 
     bool disconnectDevice(const QString &serial);
     void disconnectAllDevice();
@@ -39,6 +40,7 @@ private:
 private:
     QMap<QString, QPointer<Device>> m_devices;
     quint16 m_localPortStart = 27183;
+    QString m_script;
 };
 
 #endif // DEVICEMANAGE_H

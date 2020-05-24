@@ -1,11 +1,12 @@
 # QtScrcpy 
 
+[![Financial Contributors on Open Collective](https://opencollective.com/QtScrcpy/all/badge.svg?label=financial+contributors)](https://opencollective.com/QtScrcpy)
 ![Windows](https://github.com/barry-ran/QtScrcpy/workflows/Windows/badge.svg)
 ![MacOS](https://github.com/barry-ran/QtScrcpy/workflows/MacOS/badge.svg)
 ![Ubuntu](https://github.com/barry-ran/QtScrcpy/workflows/Ubuntu/badge.svg)
 
 ![license](https://img.shields.io/badge/license-Apache2.0-blue.svg)
-![release](https://img.shields.io/badge/release-v1.3.0-brightgreen.svg)
+![release](https://img.shields.io/github/v/release/barry-ran/QtScrcpy.svg)
 
 [中文介绍](README_zh.md)
 
@@ -32,7 +33,7 @@ It focuses on:
 
 ![linux](screenshot/ubuntu.png)
 
-## Customized key mapping (Windows only)
+## Customized key mapping (Windows&MacOS only)
 You can write your own script to map keyboard and mouse actions to touches and clicks of the mobile phone according to your needs. [Here](docs/按键映射说明.md) are the rules.
 
 A script for "PUBG mobile" and TikTok mapping is provided by default. Once enabled, you can play the game with your keyboard and mouse as the PC version. or you can use up/down/left/right direction keys to simulate up/down/left/right sliding. You can also write your own mapping files for other games according to [writing rules](docs/按键映射说明.md). The default key mapping is as follows:
@@ -51,6 +52,11 @@ Here is the instruction of adding new customized mapping files.
 - Press the ~ key again to switch back to normal mode
 - (For PUBG and similar games) If you want to drive cars with WASD, you need to check the `single rocker mode` in the game setting.
 
+## Group control
+You can control all your phones at the same time.
+
+![](docs/image/group-control.gif)
+
 ## Thanks
 
 QtScrcpy is based on [Genymobile's](https://github.com/Genymobile) [scrcpy](https://github.com/Genymobile/scrcpy) project. Thanks
@@ -65,7 +71,7 @@ video render|sdl|opengl
 cross-platform|self implemented|provided by Qt
 language|C|C++
 style|sync|async
-control|single touch|single/multi touch
+keymap|no custom keymap|support custom keymap
 build|meson+gradle|Qt Creator
 
 - It's very easy to customize your GUI with Qt
@@ -104,17 +110,17 @@ For Windows, for simplicity, prebuilt archives with all the dependencies (includ
 
  - [`QtScrcpy`][github-download]
 
-or you can [build it by yourself](#Build)
+or you can [build it by yourself](##Build)
 
 ### Mac OS
 For Mac OS, for simplicity, prebuilt archives with all the dependencies (including adb) are available:
 
 - [`QtScrcpy`][github-download]
 
-or you can [build it by yourself](#Build)
+or you can [build it by yourself](##Build)
 
 ### Linux
-you can [build it by yourself](#Build)(just ubuntu test)
+you can [build it by yourself](##Build)(just ubuntu test)
 
 
 ## Run
@@ -217,6 +223,12 @@ _²Right-click turns the screen on if it was off, presses BACK otherwise._
 ## DEVELOP
 [DEVELOP](docs/DEVELOP.md)
 
+Everyone is welcome to maintain this project and contribute your own code, but please follow these requirements:
+1. pr please mention the dev branch, not the master branch
+2. Please rebase dev before mentioning pr
+3. pr please submit on the principle of a small number of times (a small function point is recommended to mention a pr)
+4. Please keep the code style consistent with the existing style
+
 ## Why develop QtScrcpy?
 There are several reasons listed as below according to importance (high to low).
 1. In the process of learning Qt, I need a real project to try
@@ -225,7 +237,7 @@ There are several reasons listed as below according to importance (high to low).
 4. I found scrcpy and decided to re-make it with the new technology stack (C++ + Qt + Opengl + ffmpeg)
 
 
-## How to build
+## Build
 All the dependencies are provided and it is easy to compile.
 
 ### PC client
@@ -264,3 +276,33 @@ Since it is based on scrcpy, respect its Licence
 [Barry CSDN](https://blog.csdn.net/rankun1)
 
 An ordinary programmer, working mainly in C++ for desktop client development, graduated from Shandong for more than a year of steel simulation education software, and later moved to Shanghai to work in security, online education related fields, familiar with audio and video. I have an understanding of audio and video fields such as voice calls, live education, video conferencing and other related solutions. At the same time have android, linux server and other development experience.
+
+## Contributors
+
+### Code Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="https://github.com/barry-ran/QtScrcpy/graphs/contributors"><img src="https://opencollective.com/QtScrcpy/contributors.svg?width=890&button=false" /></a>
+
+### Financial Contributors
+
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/QtScrcpy/contribute)]
+
+#### Individuals
+
+<a href="https://opencollective.com/QtScrcpy"><img src="https://opencollective.com/QtScrcpy/individuals.svg?width=890"></a>
+
+#### Organizations
+
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/QtScrcpy/contribute)]
+
+<a href="https://opencollective.com/QtScrcpy/organization/0/website"><img src="https://opencollective.com/QtScrcpy/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/1/website"><img src="https://opencollective.com/QtScrcpy/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/2/website"><img src="https://opencollective.com/QtScrcpy/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/3/website"><img src="https://opencollective.com/QtScrcpy/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/4/website"><img src="https://opencollective.com/QtScrcpy/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/5/website"><img src="https://opencollective.com/QtScrcpy/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/6/website"><img src="https://opencollective.com/QtScrcpy/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/7/website"><img src="https://opencollective.com/QtScrcpy/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/8/website"><img src="https://opencollective.com/QtScrcpy/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/QtScrcpy/organization/9/website"><img src="https://opencollective.com/QtScrcpy/organization/9/avatar.svg"></a>

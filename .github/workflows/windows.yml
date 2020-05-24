@@ -50,7 +50,7 @@ jobs:
       # 安装Qt
       - name: Install Qt
         # 使用外部action。这个action专门用来安装Qt
-        uses: jurplel/install-qt-action@v2.0.0
+        uses: jurplel/install-qt-action@v2.6.2
         with:
           # Version of Qt to install
           version: ${{ matrix.qt-ver }}
@@ -71,6 +71,7 @@ jobs:
           ENV_VCVARSALL: ${{ env.vcvarsall-path }}
           ENV_QT_PATH: ${{ env.qt-install-path }}
         run: |
+          call python ci\generate-version.py
           call "ci\win\build_for_win.bat" release ${{ matrix.msvc-arch }}
       # 获取ref最后一个/后的内容
       - name: Get the version
