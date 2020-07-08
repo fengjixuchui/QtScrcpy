@@ -85,12 +85,16 @@ Dialog::~Dialog()
 void Dialog::initUI()
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
+    setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 
     ui->bitRateBox->addItem("2000000");
     ui->bitRateBox->addItem("6000000");
     ui->bitRateBox->addItem("8000000");
     ui->bitRateBox->addItem("10000000");
+    ui->bitRateBox->addItem("20000000");
+    ui->bitRateBox->addItem("50000000");
+    ui->bitRateBox->addItem("100000000");
+    ui->bitRateBox->addItem("200000000");
     ui->bitRateBox->setCurrentIndex(Config::getInstance().getBitRateIndex());
 
     ui->maxSizeBox->addItem("640");
@@ -104,6 +108,13 @@ void Dialog::initUI()
     ui->formatBox->addItem("mp4");
     ui->formatBox->addItem("mkv");
     ui->formatBox->setCurrentIndex(Config::getInstance().getRecordFormatIndex());
+
+    ui->lockOrientationBox->addItem(tr("no lock"));
+    ui->lockOrientationBox->addItem("0");
+    ui->lockOrientationBox->addItem("90");
+    ui->lockOrientationBox->addItem("180");
+    ui->lockOrientationBox->addItem("270");
+    ui->lockOrientationBox->setCurrentIndex(0);
 
     ui->recordPathEdt->setText(Config::getInstance().getRecordPath());
     ui->framelessCheck->setChecked(Config::getInstance().getFramelessWindow());
@@ -182,6 +193,8 @@ void Dialog::on_startServerBtn_clicked()
     params.useReverse = ui->useReverseCheck->isChecked();
     params.display = !ui->notDisplayCheck->isChecked();
     params.renderExpiredFrames = Config::getInstance().getRenderExpiredFrames();
+    params.lockVideoOrientation = ui->lockOrientationBox->currentIndex() - 1;
+    params.stayAwake = ui->stayAwakeCheck->isChecked();
 
     m_deviceManage.connectDevice(params);
 

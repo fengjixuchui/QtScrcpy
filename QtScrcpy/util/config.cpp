@@ -14,7 +14,7 @@
 #define COMMON_PUSHFILE_DEF "/sdcard/"
 
 #define COMMON_SERVER_VERSION_KEY "ServerVersion"
-#define COMMON_SERVER_VERSION_DEF "1.12.1"
+#define COMMON_SERVER_VERSION_DEF "1.14"
 
 #define COMMON_SERVER_PATH_KEY "ServerPath"
 #define COMMON_SERVER_PATH_DEF "/data/local/tmp/scrcpy-server.jar"
@@ -33,6 +33,9 @@
 
 #define COMMON_ADB_PATH_KEY "AdbPath"
 #define COMMON_ADB_PATH_DEF ""
+
+#define COMMON_LOG_LEVEL_KEY "LogLevel"
+#define COMMON_LOG_LEVEL_DEF "info"
 
 // user data
 #define COMMON_RECORD_KEY "RecordPath"
@@ -263,6 +266,15 @@ QString Config::getAdbPath()
     adbPath = m_settings->value(COMMON_ADB_PATH_KEY, COMMON_ADB_PATH_DEF).toString();
     m_settings->endGroup();
     return adbPath;
+}
+
+QString Config::getLogLevel()
+{
+    QString logLevel;
+    m_settings->beginGroup(GROUP_COMMON);
+    logLevel = m_settings->value(COMMON_LOG_LEVEL_KEY, COMMON_LOG_LEVEL_DEF).toString();
+    m_settings->endGroup();
+    return logLevel;
 }
 
 QString Config::getTitle()
