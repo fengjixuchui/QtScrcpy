@@ -6,11 +6,13 @@ on:
       - 'QtScrcpy/**'
       - '!QtScrcpy/res/**'
       - '.github/workflows/windows.yml'
+      - 'ci/win**'
   pull_request:
     paths:
       - 'QtScrcpy/**'
       - '!QtScrcpy/res/**'
       - '.github/workflows/windows.yml'
+      - 'ci/win**'
 jobs:
   build:
     name: Build
@@ -22,7 +24,7 @@ jobs:
     # 矩阵配置 https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix
     strategy:
       matrix:
-        qt-ver: [5.15.0]
+        qt-ver: [5.15.1]
         qt-arch: [win64_msvc2019_64, win32_msvc2019]
         # 配置qt-arch的额外设置msvc-arch，qt-arch-install
         include:
@@ -38,6 +40,7 @@ jobs:
     env:
       target-name: QtScrcpy
       vcvarsall-path: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+      vcinstall-path: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC'
       qt-install-path: ${{ github.workspace }}/${{ matrix.qt-ver }}
       plantform-des: win
     # 步骤
@@ -84,6 +87,8 @@ jobs:
       - name: Package
         id: package
         env:
+          ENV_VCVARSALL: ${{ env.vcvarsall-path }}
+          ENV_VCINSTALL: ${{ env.vcinstall-path }}
           ENV_QT_PATH: ${{ env.qt-install-path }}
           publish_name: ${{ env.target-name }}-${{ env.plantform-des }}-${{ matrix.msvc-arch }}-${{ steps.get-version.outputs.version }}
         run: |
